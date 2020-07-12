@@ -6,6 +6,7 @@ https://wiki.fhem.de/wiki/Maple-SignalDuino
 Es gibt für den SIGNALDuino nun 2 neue Attribute.
 
 - ``"pollingStatus"``: wenn größer 0 dann wird alle x Sekunden ein "set statusRequest" gesendet, wenn ":0" angehängt wird (z.B. "600:0" polling alle 10 Min), dann wird bei "off" das polling statusRequest gestoppt.
+Aktiviert wird das polling mit set on oder statusRequest
 
 - ``"sendMaxRetry" (default 4)``: damit kann angegeben werden, wie oft set on, off und statusRequest, wiederholt wird, falls es keine Antwort gibt.
 
