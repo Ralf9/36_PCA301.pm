@@ -1,5 +1,5 @@
 
-# $Id: 36_PCA301.pm 12056 2020-07-12 10:00:00Z Ralf9 $
+# $Id: 36_PCA301.pm 12056 2020-07-12 13:00:00Z Ralf9 $
 #
 # 2016 justme1968
 #
@@ -19,12 +19,12 @@ use constant {
 #sub PCA301_Send($$@);
 
 my %PCA301_cmdtxt = (
-	"5:0" => 'off',
-	"5:1" => 'on',
-	"4:0" => 'statreq',
-	"4:1" => 'reset',
-	"6:0" => 'identify',
-	"17:0" => 'pairing'
+	'5:0' => 'off',
+	'5:1' => 'on',
+	'4:0' => 'statreq',
+	'4:1' => 'reset',
+	'6:0' => 'identify',
+	'17:0' => 'pairing'
 	);
 
 sub
@@ -32,7 +32,7 @@ PCA301_Initialize
 {
   my ($hash) = @_;
 
-  $hash->{Match}     = "^\\S+\\s+24";
+  $hash->{Match}     = '^\\S+\\s+24';
   $hash->{SetFn}     = \&PCA301_Set;
   #$hash->{GetFn}     = "PCA301_Get";
   $hash->{DefFn}     = \&PCA301_Define;
@@ -40,13 +40,13 @@ PCA301_Initialize
   $hash->{FingerprintFn}   = \&PCA301_Fingerprint;
   $hash->{ParseFn}   = \&PCA301_Parse;
   $hash->{AttrFn}    = \&PCA301_Attr;
-  $hash->{AttrList}  = "IODev"
-                       ." ignore:1,0"
-                       ." readonly:1,0"
-                       ." forceOn:1,0"
-                       ." offLevel"
-                       ." pollingStatus"  # nur fuer SIGNALduino
-                       ." sendMaxRetry"   # nur fuer SIGNALduino
+  $hash->{AttrList}  = 'IODev'
+                       .' ignore:1,0'
+                       .' readonly:1,0'
+                       .' forceOn:1,0'
+                       .' offLevel'
+                       .' pollingStatus'  # nur fuer SIGNALduino
+                       .' sendMaxRetry'   # nur fuer SIGNALduino
                        ." $readingFnAttributes";
 }
 
@@ -57,7 +57,7 @@ PCA301_Define
   my @a = split("[ \t][ \t]*", $def);
 
   if(@a != 4 ) {
-    my $msg = "wrong syntax: define <name> PCA301 <addr> <channel>";
+    my $msg = 'wrong syntax: define <name> PCA301 <addr> <channel>';
     Log3 undef, 2, $msg;
     return $msg;
   }
@@ -129,27 +129,29 @@ PCA301_Set
   my $arg2 = $aa[2];
   my $arg3 = $aa[3];
 
-  my $readonly = AttrVal($name, "readonly", "0" );
-
-  my $list = "identify:noArg reset:noArg statusRequest:noArg";
-  #$list .= " CmdData"  if( !$readonly );	# nur fuer Test und Debug zwecke
-  $list .= " off:noArg on:noArg toggle:noArg pairing:noArg" if( !$readonly );
+  my $readonly = AttrVal($name, 'readonly', '0' );
+  my $io = $hash->{IODev};
+  
+  my $list = 'identify:noArg reset:noArg statusRequest:noArg';
+  #$list .= ' CmdData'  if( !$readonly );	# nur fuer Test und Debug zwecke
+  $list .= ' off:noArg on:noArg toggle:noArg' if( !$readonly );
+  $list .= ' pairing:noArg' if (!$readonly && $io->{TYPE} eq 'SIGNALduino');
 
   if( $cmd eq 'toggle' ) {
-    $cmd = ReadingsVal($name,"state","on") eq "off" ? "on" :"off";
+    $cmd = ReadingsVal($name,'state','on') eq 'off' ? 'on' :'off';
   }
 
   if( !$readonly && $cmd eq 'off' ) {
-    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    readingsSingleUpdate($hash, 'state', "set-$cmd", 1);
     PCA301_Send( $hash, '5:0', 1 );
   } elsif( !$readonly && $cmd eq 'on' ) {
-    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    readingsSingleUpdate($hash, 'state', "set-$cmd", 1);
     PCA301_Send( $hash, '5:1', 1 );
   } elsif( $cmd eq 'statusRequest' ) {
-    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    readingsSingleUpdate($hash, 'state', "set-$cmd", 1);
     PCA301_Send( $hash, '4:0', 1 );
   } elsif( $cmd eq 'reset' ) {
-    readingsSingleUpdate($hash, "state", "set-$cmd", 1);
+    readingsSingleUpdate($hash, 'state', "set-$cmd", 1);
     PCA301_Send( $hash, '4:1', 0 );
   } elsif( $cmd eq 'identify' ) {
     PCA301_Send( $hash, '6:0', 0 );
@@ -200,12 +202,12 @@ PCA301_Poll_statusRequest
   my (undef,$name) = split(':', $param);
   my $hash = $defs{$name};
   
-  readingsSingleUpdate($hash, "state", "set-statusRequest", 1);
+  readingsSingleUpdate($hash, 'state', 'set-statusRequest', 1);
   PCA301_Send( $hash, '4:0', 1 );
   $hash->{cmd} = '4:0';
-  InternalTimer(gettimeofday()+PCA301_send_OnOffStatus_timeout, "PCA301_SendRetry", $hash, 0);
+  InternalTimer(gettimeofday()+PCA301_send_OnOffStatus_timeout, 'PCA301_SendRetry', $hash, 0);
   if ($hash->{pollStatus}) {
-    InternalTimer(gettimeofday() + $hash->{pollStatus}, "PCA301_Poll_statusRequest", "Poll_statusRequest:$name");
+    InternalTimer(gettimeofday() + $hash->{pollStatus}, 'PCA301_Poll_statusRequest', "Poll_statusRequest:$name");
   }
 }
 
@@ -218,17 +220,17 @@ PCA301_SendRetry
 	
 	RemoveInternalTimer($hash);
 	
-	my $sendMaxCmdRetry = AttrVal($name, "sendMaxRetry", "4");
+	my $sendMaxCmdRetry = AttrVal($name, 'sendMaxRetry', '3');
 	
-	if (!defined($retrycmd)) {
-		$hash->{cmdRetry} = 0;
+	if (!defined($hash->{cmdRetry})) {
+		$hash->{cmdRetry} = 1;
 	} else {
 		$hash->{cmdRetry}++;
 	}
 	Log3 $hash, 3, "$name: PCA301_SendRetry: $hash->{cmdRetry} cmd=$PCA301_cmdtxt{$retrycmd}";
 	PCA301_Send( $hash, $retrycmd, 0);
-	if ($hash->{cmdRetry} < $sendMaxCmdRetry) {
-		InternalTimer(gettimeofday() + PCA301_send_OnOffStatus_timeout, "PCA301_SendRetry", $hash, 0);
+	if ($hash->{cmdRetry} <= $sendMaxCmdRetry) {
+		InternalTimer(gettimeofday() + PCA301_send_OnOffStatus_timeout, 'PCA301_SendRetry', $hash, 0);
 	}
 	else {
 		delete ($hash->{cmdRetry});
@@ -286,72 +288,75 @@ PCA301_Parse
 
   $rhash->{PCA301_lastRcv} = TimeNow();
 
-  #if( $rhash->{channel} ne $channel ) {
-  #  Log3 $rname, 3, "PCA301 $rname, channel changed from $rhash->{channel} to $channel";
+  if ($hash->{TYPE} ne 'SIGNALduino') {
+    if( $rhash->{channel} ne $channel ) {
+      Log3 $rname, 3, "PCA301 $rname, channel changed from $rhash->{channel} to $channel";
 
-  #  $rhash->{channel} = $channel;
-  #  $rhash->{DEF} = "$rhash->{addr} $rhash->{channel}";
-  #  CommandSave(undef,undef) if( AttrVal( "autocreate", "autosave", 1 ) );
-  #}
+      $rhash->{channel} = $channel;
+      $rhash->{DEF} = "$rhash->{addr} $rhash->{channel}";
+      CommandSave(undef,undef) if( AttrVal( 'autocreate', 'autosave', 1 ) );
+    }
+  }
+  else {	# SIGNALduino
+    RemoveInternalTimer($rhash);
+    delete ($rhash->{cmdRetry});
+  }
 
-  my $readonly = AttrVal($rname, "readonly", "0" );
+  my $readonly = AttrVal($rname, 'readonly', '0' );
   my $state = "";
 
-  # nur fuer SIGNALduino
-  RemoveInternalTimer($rhash);
-  delete ($rhash->{cmdRetry});
-  
   if( $cmd eq 0x04 ) {
     if (defined($rhash->{cmd})) {
       delete($rhash->{cmd});
     }
-    $state = $data==0x00?"off":"on";
+    $state = $data==0x00?'off':'on';
     my $power = ($bytes[6]*256 + $bytes[7]) / 10.0;
     my $consumption = ($bytes[8]*256 + $bytes[9]) / 100.0;
     $state = $power if( $readonly );
-    my $off_level = AttrVal($rname, "offLevel", undef);
-    $state = "off" if( $readonly && defined($off_level) && $power <= $off_level );
-    Log3 $rhash, 4, "$rname: PCA301 Parse: $rname, state=$state, power=$power";
+    my $off_level = AttrVal($rname, 'offLevel', undef);
+    $state = 'off' if( $readonly && defined($off_level) && $power <= $off_level );
+    Log3 $rhash, 4, "$name: PCA301 Parse: $rname, state=$state, power=$power";
     readingsBeginUpdate($rhash);
-    readingsBulkUpdate($rhash, "power", $power) if( $power != ReadingsVal($rname,"power",0) );
-    readingsBulkUpdate($rhash, "consumption", $consumption) if( $consumption != ReadingsVal($rname,"consumption",0) );
-    readingsBulkUpdate($rhash, "state", $state) if( $state ne ReadingsVal($rname,"state","") );
+    readingsBulkUpdate($rhash, 'power', $power) if( $power != ReadingsVal($rname,'power',0) );
+    readingsBulkUpdate($rhash, 'consumption', $consumption) if( $consumption != ReadingsVal($rname,'consumption',0) );
+    readingsBulkUpdate($rhash, 'state', $state) if( $state ne ReadingsVal($rname,'state','') );
     readingsEndUpdate($rhash,1);
   } elsif( $cmd eq 0x05 ) {		# on / off
     if (defined($rhash->{cmd})) {
       delete($rhash->{cmd});
       $state = $data==0x00?"off":"on";	# Rueckmeldung von set on / off
     } else {
-      $state = $data==0x00?"on":"off";	# on/off mit der Taste an der PCA301
+      $state = $data==0x00?'on':'off';	# on/off mit der Taste an der PCA301
     }
-    readingsSingleUpdate($rhash, "state", $state, 1);
+    readingsSingleUpdate($rhash, 'state', $state, 1);
   }
-    # nur fuer SIGNALduino
-    if ($state ne "off" && !defined($rhash->{pollStatus})) {	# start polling statusRequest, falls noch nicht gestartet
-      my $pollStat = AttrVal($rname, "pollingStatus", "0" );
+  if ($hash->{TYPE} eq 'SIGNALduino') {
+    if ($state ne 'off' && !defined($rhash->{pollStatus})) {	# start polling statusRequest, falls noch nicht gestartet
+      my $pollStat = AttrVal($rname, 'pollingStatus', '0' );
       my ($poll, $pollStatusOff) = split(":", $pollStat);
       if ($poll > 0) {
         if (defined($pollStatusOff) && $pollStatusOff == 0) {	# bei off das polling statusRequest stoppen?
           $rhash->{pollStatusOff} = $pollStatusOff;
         }
         Log3 $rhash, 3, "$rname: PCA301 Parse: start polling from statusRequest all $pollStat seconds";
-        readingsSingleUpdate($rhash, "pollingStatus", "activated", 0);
+        readingsSingleUpdate($rhash, 'pollingStatus', 'activated', 0);
         $rhash->{pollStatus} = $poll;
-        InternalTimer(gettimeofday() + $poll, "PCA301_Poll_statusRequest", "Poll_statusRequest:$rname");
+        InternalTimer(gettimeofday() + $poll, 'PCA301_Poll_statusRequest', "Poll_statusRequest:$rname");
       }
     }
-    elsif ($state eq "off" && exists($rhash->{pollStatus}) && defined($rhash->{pollStatusOff}) && $rhash->{pollStatusOff} == 0) {
+    elsif ($state eq 'off' && exists($rhash->{pollStatus}) && defined($rhash->{pollStatusOff}) && $rhash->{pollStatusOff} == 0) {
       delete($rhash->{pollStatus});
       delete($rhash->{pollStatusOff});
       RemoveInternalTimer("Poll_statusRequest:$rname");
       Log3 $rhash, 3, "$rname: PCA301 Parse: stop polling from statusRequest";
-      readingsSingleUpdate($rhash, "pollingStatus", "stopped", 0);
+      readingsSingleUpdate($rhash, 'pollingStatus', 'stopped', 0);
     }
+  }
 
-  if( AttrVal($rname, "forceOn", 0 ) == 1
-      && $state eq "off"  ) {
-    readingsSingleUpdate($rhash, "state", "set-forceOn", 1);
-    InternalTimer(gettimeofday()+3, "PCA301_ForceOn", $rhash, 0);
+  if( AttrVal($rname, 'forceOn', 0 ) == 1
+      && $state eq 'off'  ) {
+    readingsSingleUpdate($rhash, 'state', 'set-forceOn', 1);
+    InternalTimer(gettimeofday()+3, 'PCA301_ForceOn', $rhash, 0);
   }
 
   return @list;
@@ -400,7 +405,7 @@ PCA301_Send
 
   $hash->{PCA301_lastSend} = TimeNow();
 
-  if ($io->{TYPE} ne "SIGNALduino") {
+  if ($io->{TYPE} ne 'SIGNALduino') {
      $msg = sprintf( "%i,%i,%i,%i,%i,%i,255,255,255,255s", hex($hash->{channel}),
                                                            $cmd,
                                                            hex(substr($hash->{addr},0,2)), hex(substr($hash->{addr},2,2)), hex(substr($hash->{addr},4,2)),
@@ -410,17 +415,21 @@ PCA301_Send
     IOWrite( $hash, $msg );
   }		# SIGNALduino
   else {
+    if ($io->{DevState} ne 'initialized') {
+      Log3 $hash, 3, $hash->{NAME} . ': PCA301 not send, ' . $io->{NAME} . ' is not initialized';
+      return;
+    }
     $msg = sprintf("%02X%02X%s%02X", hex($hash->{channel}), $cmd, $hash->{addr}, $data);
-    $msg .= "FFFFFFFF";
+    $msg .= 'FFFFFFFF';
     my $crc16 = sprintf("%04X", PCA301_CalculateCRC16($msg, 0x8005));
-    $msg = "SN;N=3;D=$msg$crc16" . "AAAAAA;";
+    $msg = "SN;N=3;D=$msg$crc16" . 'AAAAAA;';
     Log3 $hash, 3, $hash->{NAME} . ": PCA301 send $cmdStr: msg=$msg";
     
-    IOWrite($hash, "raw", $msg);
+    IOWrite($hash, 'raw', $msg);
     
     if ($sendRetry) {
       $hash->{cmd} = $cmdtxt;
-      InternalTimer(gettimeofday()+PCA301_send_OnOffStatus_timeout, "PCA301_SendRetry", $hash, 0);
+      InternalTimer(gettimeofday()+PCA301_send_OnOffStatus_timeout, 'PCA301_SendRetry', $hash, 0);
     }
   }
 }
@@ -430,7 +439,9 @@ PCA301_Attr
 {
   my ($cmd, $name, $attrName, $attrVal) = @_;
   
-  if ($attrName eq "pollingStatus") {
+  my $hash = $defs{$name};
+  my $io = $hash->{IODev};
+  if ($attrName eq 'pollingStatus' && $io->{TYPE} eq 'SIGNALduino') {
     my $pollStat;
     if (!defined($attrVal)) {
       $pollStat = 0;
@@ -440,7 +451,7 @@ PCA301_Attr
     }
     #Log3 $name, 3, "PCA301: attrName=$attrName attrVal=$attrVal";
     if ($pollStat < 30 && $pollStat > 0) {
-      return "value too small (min 30)";
+      return 'value too small (min 30)';
     }
     if ($pollStat == 0) {	# stop polling statusRequest
        my $hash = $defs{$name};
@@ -448,7 +459,7 @@ PCA301_Attr
        delete($hash->{pollStatusOff});
        RemoveInternalTimer("Poll_statusRequest:$name");
        Log3 $hash, 3, "$name: PCA301 Parse: stop polling from statusRequest";
-       readingsSingleUpdate($hash, "pollingStatus", "stopped", 0);
+       readingsSingleUpdate($hash, 'pollingStatus', 'stopped', 0);
     }
   }
   return;
