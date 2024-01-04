@@ -1,5 +1,5 @@
 
-# $Id: 36_PCA301.pm 12056 2020-07-12 13:00:00Z Ralf9 $
+# $Id: 36_PCA301.pm 12056 2024-01-03 13:00:00Z Ralf9 $
 #
 # 2016 justme1968
 #
@@ -135,7 +135,7 @@ PCA301_Set
   my $list = 'identify:noArg reset:noArg statusRequest:noArg';
   #$list .= ' CmdData'  if( !$readonly );	# nur fuer Test und Debug zwecke
   $list .= ' off:noArg on:noArg toggle:noArg' if( !$readonly );
-  $list .= ' pairing:noArg' if (!$readonly && $io->{TYPE} eq 'SIGNALduino');
+  $list .= ' pairing:noArg' if (!$readonly && $io->{TYPE} =~ m/^SIGNALduino/);
 
   if( $cmd eq 'toggle' ) {
     $cmd = ReadingsVal($name,'state','on') eq 'off' ? 'on' :'off';
@@ -288,7 +288,7 @@ PCA301_Parse
 
   $rhash->{PCA301_lastRcv} = TimeNow();
 
-  if ($hash->{TYPE} ne 'SIGNALduino') {
+  if ($hash->{TYPE} !~ m/^SIGNALduino/) {
     if( $rhash->{channel} ne $channel ) {
       Log3 $rname, 3, "PCA301 $rname, channel changed from $rhash->{channel} to $channel";
 
@@ -330,7 +330,7 @@ PCA301_Parse
     }
     readingsSingleUpdate($rhash, 'state', $state, 1);
   }
-  if ($hash->{TYPE} eq 'SIGNALduino') {
+  if ($hash->{TYPE} =~ m/^SIGNALduino/) {
     if ($state ne 'off' && !defined($rhash->{pollStatus})) {	# start polling statusRequest, falls noch nicht gestartet
       my $pollStat = AttrVal($rname, 'pollingStatus', '0' );
       my ($poll, $pollStatusOff) = split(":", $pollStat);
@@ -405,7 +405,7 @@ PCA301_Send
 
   $hash->{PCA301_lastSend} = TimeNow();
 
-  if ($io->{TYPE} ne 'SIGNALduino') {
+  if ($io->{TYPE} !~ m/^SIGNALduino/) {
      $msg = sprintf( "%i,%i,%i,%i,%i,%i,255,255,255,255s", hex($hash->{channel}),
                                                            $cmd,
                                                            hex(substr($hash->{addr},0,2)), hex(substr($hash->{addr},2,2)), hex(substr($hash->{addr},4,2)),
@@ -503,8 +503,7 @@ PCA301_Attr
       Reset consumption counters</li>
     <li>statusRequest<br>
       Request device status update.</li>
-    <li>pairing<br>
-      todo</li>
+    <li>pairing</li>
     <li><a href="#setExtensions"> set extensions</a> are supported.</li>
   </ul><br>
 
